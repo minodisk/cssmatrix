@@ -27,6 +27,48 @@ function CSSMatrix(m11, m12, m13, m14, m21, m22, m23, m24, m31, m32, m33, m34, m
   this.m44 = m44 != null ? m44 : 1;
 }
 
+CSSMatrix.prototype.__defineGetter__('a', function () {
+  return this.m11;
+});
+CSSMatrix.prototype.__defineSetter__('a', function (value) {
+  this.m11 = value;
+});
+
+CSSMatrix.prototype.__defineGetter__('b', function () {
+  return this.m12;
+});
+CSSMatrix.prototype.__defineSetter__('b', function (value) {
+  this.m12 = value;
+});
+
+CSSMatrix.prototype.__defineGetter__('c', function () {
+  return this.m21;
+});
+CSSMatrix.prototype.__defineSetter__('c', function (value) {
+  this.m21 = value;
+});
+
+CSSMatrix.prototype.__defineGetter__('d', function () {
+  return this.m22;
+});
+CSSMatrix.prototype.__defineSetter__('d', function (value) {
+  this.m22 = value;
+});
+
+CSSMatrix.prototype.__defineGetter__('e', function () {
+  return this.m41;
+});
+CSSMatrix.prototype.__defineSetter__('e', function (value) {
+  this.m41 = value;
+});
+
+CSSMatrix.prototype.__defineGetter__('f', function () {
+  return this.m42;
+});
+CSSMatrix.prototype.__defineSetter__('f', function (value) {
+  this.m42 = value;
+});
+
 CSSMatrix.prototype.identity = function () {
   this.m11 = 1;
   this.m12 = 0;
@@ -56,7 +98,7 @@ CSSMatrix.prototype.clone = function () {
 };
 
 CSSMatrix.prototype.toString = function () {
-  var props = [
+  var matrix = [
       this.m11, this.m12, this.m13, this.m14,
       this.m21, this.m22, this.m23, this.m24,
       this.m31, this.m32, this.m33, this.m34,
@@ -64,14 +106,23 @@ CSSMatrix.prototype.toString = function () {
     ]
     , i, len
     ;
-
-  for (i = 0, len = props.length; i < len; i++) {
-    if (props[i] > -SMALL_NUMBER && props[i] < SMALL_NUMBER) {
-      props[i] = 0;
+  for (i = 0, len = matrix.length; i < len; i++) {
+    if (matrix[i] > -SMALL_NUMBER && matrix[i] < SMALL_NUMBER) {
+      matrix[i] = 0;
     }
   }
-
-  return 'matrix3d(' + props.join(', ') + ')';
+  if (this.m13 === 0 && this.m14 === 0
+    && this.m23 === 0 && this.m24 === 0
+    && this.m31 === 0 && this.m32 === 0 && this.m33 === 1 && this.m34 === 0
+    && this.m43 === 0 && this.m44 === 1) {
+    matrix = [
+      this.m11, this.m12,
+      this.m21, this.m22,
+      this.m41, this.m42
+    ];
+    return 'matrix(' + matrix.join(', ') + ')';
+  }
+  return 'matrix3d(' + matrix.join(', ') + ')';
 };
 
 CSSMatrix.prototype.apply = function (m11, m12, m13, m14, m21, m22, m23, m24, m31, m32, m33, m34, m41, m42, m43, m44) {
@@ -173,7 +224,7 @@ CSSMatrix.prototype.translate = function (x, y, z) {
 
 CSSMatrix.prototype.scale = function (scaleX, scaleY, scaleZ) {
   scaleX = scaleX != null ? scaleX : 1;
-  scaleY = scaleY != null ? scaleY : 1;
+  scaleY = scaleY != null ? scaleY : scaleX;
   scaleZ = scaleZ != null ? scaleZ : 1;
   return this.concat(
     scaleX, 0, 0, 0,
@@ -184,17 +235,27 @@ CSSMatrix.prototype.scale = function (scaleX, scaleY, scaleZ) {
 };
 
 CSSMatrix.prototype.rotate = function (rotationX, rotationY, rotationZ) {
-  rotationX = rotationX != null ? rotationX * RADIAN_PER_DEGREE : 0;
-  rotationY = rotationY != null ? rotationY * RADIAN_PER_DEGREE : 0;
-  rotationZ = rotationZ != null ? rotationZ * RADIAN_PER_DEGREE : 0;
+  rotationX = rotationX != null ? rotationX : 0;
+  if (rotationY == null && rotationZ == null) {
+    rotationZ = rotationX;
+    rotationX = 0;
+    rotationY = 0;
+  } else {
+    rotationY = rotationY != null ? rotationY : 0;
+    rotationZ = rotationZ != null ? rotationZ : 0;
+  }
+  rotationX *= RADIAN_PER_DEGREE;
+  rotationY *= RADIAN_PER_DEGREE;
+  rotationZ *= RADIAN_PER_DEGREE;
   var cosX = cos(rotationX), sinX = -sin(rotationX)
     , cosY = cos(rotationY), sinY = -sin(rotationY)
     , cosZ = cos(rotationZ), sinZ = -sin(rotationZ)
     ;
+  console.log(-cosX * sinZ + sinX * sinY * cosZ, cosY * sinZ);
   return this.concat(
-    cosY * cosZ, -cosX * sinZ + sinX * sinY * cosZ, sinX * sinZ + cosX * sinY * cosZ, 0,
-    cosY * sinZ, cosX * cosZ + sinX * sinY * sinZ, -sinX * cosZ + cosX * sinY * sinZ, 0,
-    -sinY, sinX * cosY, cosX * cosY, 0,
+    cosY * cosZ, -cosX * sinZ + sinX * sinY * cosZ, sinX * sinZ + cosX * sinY * cosZ , 0,
+    cosY * sinZ, cosX * cosZ + sinX * sinY * sinZ , -sinX * cosZ + cosX * sinY * sinZ, 0,
+    -sinY      , sinX * cosY                      , cosX * cosY                      , 0,
     0, 0, 0, 1
   );
 };
