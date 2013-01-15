@@ -247,17 +247,47 @@ CSSMatrix.prototype.rotate = function (rotationX, rotationY, rotationZ) {
   rotationX *= RADIAN_PER_DEGREE;
   rotationY *= RADIAN_PER_DEGREE;
   rotationZ *= RADIAN_PER_DEGREE;
-  var cosX = cos(rotationX), sinX = -sin(rotationX)
-    , cosY = cos(rotationY), sinY = -sin(rotationY)
-    , cosZ = cos(rotationZ), sinZ = -sin(rotationZ)
+
+  var s, c, a, b
     ;
-  console.log(-cosX * sinZ + sinX * sinY * cosZ, cosY * sinZ);
-  return this.concat(
-    cosY * cosZ, -cosX * sinZ + sinX * sinY * cosZ, sinX * sinZ + cosX * sinY * cosZ , 0,
-    cosY * sinZ, cosX * cosZ + sinX * sinY * sinZ , -sinX * cosZ + cosX * sinY * sinZ, 0,
-    -sinY      , sinX * cosY                      , cosX * cosY                      , 0,
+
+  rotationZ /= 2;
+  s = sin(rotationZ);
+  c = cos(rotationZ);
+  a = 1 - 2 * s * s;
+  b = 2 * s * c;
+  this.concat(
+    a, b, 0, 0,
+    -b, a, 0, 0,
+    0, 0, 1, 0,
     0, 0, 0, 1
   );
+
+  rotationY /= 2;
+  s = sin(rotationY);
+  c = cos(rotationY);
+  a = 1 - 2 * s * s;
+  b = 2 * s * c;
+  this.concat(
+    a, 0, -b, 0,
+    0, 1, 0, 0,
+    b, 0, a, 0,
+    0, 0, 0, 1
+  );
+
+  rotationX /= 2;
+  s = sin(rotationX);
+  c = cos(rotationX);
+  a = 1 - 2 * s * s;
+  b = 2 * s * c;
+  this.concat(
+    1, 0, 0, 0,
+    0, a, b, 0,
+    0, -b, a, 0,
+    0, 0, 0, 1
+  );
+
+  return this;
 };
 
 CSSMatrix.prototype.skew = function (skewX, skewY) {
