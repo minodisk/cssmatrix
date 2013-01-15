@@ -23,6 +23,8 @@ var PROPS = Object.keys(new WebKitCSSMatrix())
   }
   ;
 
+//TODO NaNチェック
+
 TestCase('test-CSSMatrix', {
 
   'test constructor': function () {
